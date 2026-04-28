@@ -23,8 +23,8 @@ export function StopLayer({
 
         return (
           <CircleMarker
-            key={stop.id}
-            center={[stop.lat, stop.lon]}
+            key={stop.stop_id}
+            center={[stop.stop_lat, stop.stop_lon]}
             radius={6}
             pathOptions={{
               color: color,
@@ -41,7 +41,7 @@ export function StopLayer({
             }}
           >
             <Tooltip sticky>
-              <div className="font-semibold">{stop.name || "Unnamed Stop"}</div>
+              <div className="font-semibold">{stop.stop_name || "Unnamed Stop"}</div>
               <div className="text-xs text-muted-foreground mt-1 capitalize">
                 {stop.status}
               </div>
