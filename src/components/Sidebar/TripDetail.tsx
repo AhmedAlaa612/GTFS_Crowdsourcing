@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { createClient } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { SplitEditor } from '../Review/ReviewActions';
+import type { MappedStop } from '@/components/Map/StopPicker';
 
 interface TripDetailProps {
   trip: Trip;
@@ -26,7 +27,7 @@ export function TripDetail({ trip, route, stops, stopTimes, fare, userRole }: Tr
 
   const displayStops = showAllStops ? stops : stops.slice(0, 10);
 
-  const handleSaveQuickEdit = async (editStops: Stop[], editName: string, editFare: string) => {
+  const handleSaveQuickEdit = async (editStops: MappedStop[], editName: string, editFare: string) => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -64,7 +65,7 @@ export function TripDetail({ trip, route, stops, stopTimes, fare, userRole }: Tr
       } as any);
       if (tErr) throw tErr;
 
-      const resolvedStops: Stop[] = [];
+      const resolvedStops: MappedStop[] = [];
       for (const stop of editStops) {
         if (stop.id.startsWith('new-')) {
           const newStopId = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 6);
@@ -76,7 +77,7 @@ export function TripDetail({ trip, route, stops, stopTimes, fare, userRole }: Tr
             status: 'pending',
           } as any).select().single();
           if (sErr) throw sErr;
-          resolvedStops.push(inserted as Stop);
+          resolvedStops.push((inserted as unknown) as MappedStop);
         } else {
           resolvedStops.push(stop);
         }

@@ -5,7 +5,8 @@ import type L from 'leaflet';
 import { Polyline, Marker, Tooltip } from 'react-leaflet';
 import { MapView } from '@/components/Map/MapView';
 import { createClient } from '@/lib/supabase';
-import type { Trip, TripShape, Stop } from '@/lib/database.types';
+import type { Trip, TripShape } from '@/lib/database.types';
+import type { MappedStop } from '@/components/Map/StopPicker';
 
 export interface DiffMapRef {
   reload: () => void;
@@ -22,7 +23,7 @@ export const DiffMap = forwardRef<DiffMapRef, DiffMapProps>(
     const [map, setMap] = useState<L.Map | null>(null);
     const [MarkerIcon, setMarkerIcon] = useState<any>(null);
     const [shape, setShape] = useState<TripShape | null>(null);
-    const [stops, setStops] = useState<Stop[]>([]);
+    const [stops, setStops] = useState<MappedStop[]>([]);
 
     // Keep trip in a ref so loadData always sees the latest value
     // without needing to be re-created (avoids stale closure in useImperativeHandle)
@@ -40,22 +41,22 @@ export const DiffMap = forwardRef<DiffMapRef, DiffMapProps>(
       }
 
       const [shapeRes, tripStopsRes] = await Promise.all([
-        supabase.from('trip_shapes').select('*').eq('trip_id', currentTrip.id).single(),
-        supabase.from('stop_times').select('stop_id, stop_sequence').eq('trip_id', currentTrip.id).order('stop_sequence'),
+        supabase.from('trip_shapes').select('*').eq('trip_id', currentTrip.trip_id).single(),
+        supabase.from('stop_times').select('stop_id, stop_sequence').eq('trip_id', currentTrip.trip_id).order('stop_sequence'),
       ]);
 
       setShape((shapeRes.data as TripShape) ?? null);
 
       const tripStopsData = tripStopsRes.data;
       if (tripStopsData?.length) {
-        const stopIds = tripStopsData.map((ts) => ts.stop_id);
+        const stopIds = tripStopsData.map((ts: any) => ts.stop_id);
         const { data: stopsData } = await supabase.from('stops').select('*').in('stop_id', stopIds);
         if (stopsData) {
           const ordered = tripStopsData
-            .map((ts) => stopsData.find((s: any) => s.stop_id === ts.stop_id))
+            .map((ts: any) => stopsData.find((s: any) => s.stop_id === ts.stop_id))
             .filter(Boolean);
           // Map to legacy shape for rendering
-          setStops(ordered.map((s: any) => ({ ...s, id: s.stop_id, name: s.stop_name, lat: s.stop_lat, lon: s.stop_lon })) as Stop[]);
+          setStops(ordered.map((s: any) => ({ ...s, id: s.stop_id, name: s.stop_name, lat: s.stop_lat, lon: s.stop_lon })) as MappedStop[]);
         }
       } else {
         setStops([]);

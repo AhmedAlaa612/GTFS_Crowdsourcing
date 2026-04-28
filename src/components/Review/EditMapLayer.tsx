@@ -2,13 +2,13 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import { CircleMarker, Marker, Polyline, Tooltip } from 'react-leaflet';
-import type { Stop } from '@/lib/database.types';
+import type { MappedStop } from '@/components/Map/StopPicker';
 
 interface EditMapLayerProps {
-  routeStops: Stop[];
-  availableStops: Stop[];
+  routeStops: MappedStop[];
+  availableStops: MappedStop[];
   highlightedIdx: number | null;
-  onStopClick: (stop: Stop) => void;
+  onStopClick: (stop: MappedStop) => void;
   onStopHover: (idx: number | null) => void;
 }
 
@@ -70,9 +70,10 @@ export function EditMapLayer({
         <CircleMarker
           key={stop.id}
           center={[stop.lat, stop.lon]}
+          radius={7}
           pathOptions={{
             color: 'white', fillColor: '#22c55e',
-            fillOpacity: 0.9, weight: 2, radius: 7,
+            fillOpacity: 0.9, weight: 2,
           }}
           eventHandlers={{
             click: async (e) => {
@@ -96,10 +97,10 @@ export function EditMapLayer({
           <CircleMarker
             key={stop.id + '-hit-' + idx}
             center={[stop.lat, stop.lon]}
+            radius={isHighlighted ? 16 : 13}
             pathOptions={{
               color: 'transparent', fillColor: 'transparent',
               fillOpacity: 0, weight: 0,
-              radius: isHighlighted ? 16 : 13,
             }}
             eventHandlers={{
               mouseover: () => onStopHover(idx),

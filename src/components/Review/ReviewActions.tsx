@@ -11,6 +11,9 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import type { Trip, Stop, Fare, StopTime } from '@/lib/database.types';
+
+export type ReviewTrip = Trip & { id: string; name: string };
+export type ReviewStop = Stop & { id: string; name: string | null; lat: number; lon: number };
 import { toast } from 'sonner';
 import { getRouteShape } from '@/lib/osrm';
 import dynamic from 'next/dynamic';
@@ -26,11 +29,11 @@ const EditMapLayer = dynamic(
 );
 
 interface ReviewActionsProps {
-  trip: Trip;
-  tripStops: Stop[];
+  trip: ReviewTrip;
+  tripStops: ReviewStop[];
   fare: Fare | null;
   onActionComplete: () => void;
-  onStopsChange: (stops: Stop[]) => void;
+  onStopsChange: (stops: ReviewStop[]) => void;
   onFareChange: (fare: Fare | null) => void;
   onNameChange?: (name: string) => void;
 }
@@ -50,22 +53,22 @@ export function SplitEditor({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  trip: Trip;
-  initialStops: Stop[];
+  trip: ReviewTrip;
+  initialStops: ReviewStop[];
   fare: Fare | null;
-  onSave: (stops: Stop[], name: string, fareAmount: string) => Promise<void>;
+  onSave: (stops: ReviewStop[], name: string, fareAmount: string) => Promise<void>;
 }) {
-  const [editStops, setEditStops] = useState<Stop[]>([]);
+  const [editStops, setEditStops] = useState<ReviewStop[]>([]);
   const [editName, setEditName] = useState('');
   const [editFare, setEditFare] = useState('');
-  const [allStops, setAllStops] = useState<Stop[]>([]);
+  const [allStops, setAllStops] = useState<ReviewStop[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [openCount, setOpenCount] = useState(0);
 
   // Sequence prompt state
-  const [pendingMapStop, setPendingMapStop] = useState<Stop | null>(null);
+  const [pendingMapStop, setPendingMapStop] = useState<ReviewStop | null>(null);
   const [pendingCoord, setPendingCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [showSeqPrompt, setShowSeqPrompt] = useState(false);
   const [seqValue, setSeqValue] = useState('');
@@ -84,7 +87,7 @@ export function SplitEditor({
     setLoading(true);
     setMapReady(false);
     setOpenCount((c) => c + 1);
-    supabase.from('stops').select('*').then(({ data }) => {
+    supabase.from('stops').select('*').then(({ data }: { data: any[] | null }) => {
       const mapped = (data || []).map((s: any) => ({
         ...s,
         id: s.stop_id,
@@ -107,7 +110,7 @@ export function SplitEditor({
     }
   }, [highlightedIdx]);
 
-  const handleMapStopClick = (stop: Stop) => {
+  const handleMapStopClick = (stop: ReviewStop) => {
     if (editStops.some((s) => s.id === stop.id)) {
       toast.info('Stop already in route — remove it from the list first to reposition.');
       return;
@@ -136,12 +139,18 @@ export function SplitEditor({
       setEditStops(next);
       setHighlightedIdx(insertIdx);
     } else if (pendingCoord) {
-      const newStop: Stop = {
-        id: `new-${Date.now()}`,
+      const newStopId = `new-${Date.now()}`;
+      const newStop = {
+        id: newStopId,
         name: '',
         lat: pendingCoord.lat,
         lon: (pendingCoord as any).lon,
-        status: 'pending',
+        stop_id: newStopId,
+        stop_name: '',
+        stop_name_ar: null,
+        stop_lat: pendingCoord.lat,
+        stop_lon: (pendingCoord as any).lon,
+        status: 'pending' as const,
         contributor_id: null,
         created_at: new Date().toISOString(),
       };
@@ -398,7 +407,7 @@ export function ReviewActions({ trip, tripStops, fare, onActionComplete, onStops
   const [rejectNote, setRejectNote] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSaveEdits = async (editStops: Stop[], editName: string, editFare: string) => {
+  const handleSaveEdits = async (editStops: ReviewStop[], editName: string, editFare: string) => {
     setLoading(true);
     try {
       // 1. Trip name
@@ -433,7 +442,7 @@ export function ReviewActions({ trip, tripStops, fare, onActionComplete, onStops
       );
 
       // 3. Handle new stops (id starts with 'new-') and update existing
-      const resolvedStops: Stop[] = [];
+      const resolvedStops: ReviewStop[] = [];
       for (const stop of editStops) {
         if (stop.id.startsWith('new-')) {
           const newStopId = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 6);
@@ -443,7 +452,7 @@ export function ReviewActions({ trip, tripStops, fare, onActionComplete, onStops
             .select()
             .single();
           if (error) throw error;
-          resolvedStops.push(inserted as Stop);
+          resolvedStops.push(inserted as ReviewStop);
         } else {
           const original = tripStops.find((s) => s.id === stop.id);
           if (original && original.name !== stop.name) {

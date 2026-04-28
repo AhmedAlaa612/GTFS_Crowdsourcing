@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+import type { Database, Agency, CalendarEntry, FeedInfo, Route, Stop, Trip, StopTime } from './database.types';
 
 /**
  * Build a GTFS zip from the database that matches the original gtfsAlex format.
@@ -12,7 +12,7 @@ export async function buildGtfsZip(): Promise<Buffer> {
   const zip = new JSZip();
 
   // --- agency.txt ---
-  const { data: agencies } = await supabase.from('agencies').select('*');
+  const { data: agencies } = (await supabase.from('agencies').select('*')) as { data: Agency[] | null };
   if (agencies?.length) {
     const header = 'agency_id,agency_name,agency_url,agency_timezone';
     const rows = agencies.map(a =>
@@ -22,7 +22,7 @@ export async function buildGtfsZip(): Promise<Buffer> {
   }
 
   // --- calendar.txt ---
-  const { data: cal } = await supabase.from('calendar').select('*');
+  const { data: cal } = (await supabase.from('calendar').select('*')) as { data: CalendarEntry[] | null };
   if (cal?.length) {
     const header = 'monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date,service_id';
     const rows = cal.map(c =>
@@ -32,7 +32,7 @@ export async function buildGtfsZip(): Promise<Buffer> {
   }
 
   // --- feed_info.txt ---
-  const { data: fi } = await supabase.from('feed_info').select('*');
+  const { data: fi } = (await supabase.from('feed_info').select('*')) as { data: FeedInfo[] | null };
   if (fi?.length) {
     const f = fi[0];
     const header = 'feed_publisher_name,feed_publisher_url,feed_contact_url,feed_start_date,feed_end_date,feed_version,feed_lang';
@@ -41,8 +41,8 @@ export async function buildGtfsZip(): Promise<Buffer> {
   }
 
   // --- routes.txt ---
-  const { data: routes } = await supabase.from('routes').select('*')
-    .in('status', ['existing', 'approved']);
+  const { data: routes } = (await supabase.from('routes').select('*')
+    .in('status', ['existing', 'approved'])) as { data: Route[] | null };
   if (routes?.length) {
     const header = 'route_id,agency_id,route_long_name,route_long_name_ar,route_short_name,route_type,continuous_pickup,continuous_drop_off,route_short_name_ar';
     const rows = routes.map(r =>
@@ -52,7 +52,7 @@ export async function buildGtfsZip(): Promise<Buffer> {
   }
 
   // --- stops.txt ---
-  const { data: stops } = await supabase.from('stops').select('*');
+  const { data: stops } = (await supabase.from('stops').select('*')) as { data: Stop[] | null };
   if (stops?.length) {
     const header = 'stop_id,stop_name,stop_lat,stop_lon,stop_name_ar';
     const rows = stops.map(s =>
@@ -62,8 +62,8 @@ export async function buildGtfsZip(): Promise<Buffer> {
   }
 
   // --- trips.txt ---
-  const { data: trips } = await supabase.from('trips').select('*')
-    .in('status', ['existing', 'approved']);
+  const { data: trips } = (await supabase.from('trips').select('*')
+    .in('status', ['existing', 'approved'])) as { data: Trip[] | null };
   if (trips?.length) {
     const header = 'route_id,service_id,trip_headsign,direction_id,shape_id,trip_id,trip_headsign_ar,main_streets,main_streets_ar';
     const rows = trips.map(t =>
@@ -73,8 +73,8 @@ export async function buildGtfsZip(): Promise<Buffer> {
   }
 
   // --- stop_times.txt ---
-  const { data: stopTimes } = await supabase.from('stop_times').select('*')
-    .order('trip_id').order('stop_sequence');
+  const { data: stopTimes } = (await supabase.from('stop_times').select('*')
+    .order('trip_id').order('stop_sequence')) as { data: StopTime[] | null };
   if (stopTimes?.length) {
     const header = 'trip_id,stop_id,stop_sequence,arrival_time,departure_time,timepoint';
     const rows = stopTimes.map(st =>
