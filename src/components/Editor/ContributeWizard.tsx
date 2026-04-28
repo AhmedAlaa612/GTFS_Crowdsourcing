@@ -17,7 +17,7 @@ const PreviewStep = dynamic(
 );
 
 const GpxUploadStep = dynamic(
-  () => import('./GpxUploadStep.tsx').then((mod) => mod.GpxUploadStep),
+  () => import('./GpxUploadStep').then((mod) => mod.GpxUploadStep),
   { ssr: false }
 );
 
