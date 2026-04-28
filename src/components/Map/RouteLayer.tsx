@@ -27,7 +27,7 @@ export function RouteLayer({
     <>
       {trips.map((trip) => {
         const t = trip as TripWithRouteFields;
-        const tripShape = shapes.find((s) => s.trip_id === trip.id);
+        const tripShape = shapes.find((s) => s.trip_id === trip.trip_id);
 
         if (
           !tripShape ||
@@ -42,11 +42,11 @@ export function RouteLayer({
         );
 
         const color = t.route_color ? `#${t.route_color}` : "#3b82f6";
-        const displayName = t.route_short_name || trip.name;
+        const displayName = t.route_short_name || trip.trip_headsign || trip.trip_id;
 
         return (
           <Polyline
-            key={trip.id}
+            key={trip.trip_id}
             positions={positions}
             pathOptions={{ color, weight: 4, opacity: 0.8 }}
             eventHandlers={{
