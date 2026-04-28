@@ -79,12 +79,12 @@ export function StopPicker({
           <CircleMarker
             key={stop.id}
             center={[stop.lat, stop.lon]}
+            radius={radius}
             pathOptions={{
               color: "white",
               fillColor: color,
               fillOpacity: 1,
               weight,
-              radius,
             }}
             eventHandlers={{
               click: async (e) => {
