@@ -4,11 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import type L from 'leaflet';
 import { MapView } from '@/components/Map/MapView';
 import dynamic from 'next/dynamic';
-import type { PickedStop } from '@/components/Map/StopPicker';
+import type { PickedStop, MappedStop } from '@/components/Map/StopPicker';
 
 import { StopSequenceList } from './StopSequenceList';
 import { Button } from '@/components/ui/button';
-import type { Stop } from '@/lib/database.types';
 import { toast } from 'sonner';
 
 const StopPicker = dynamic(
@@ -29,7 +28,7 @@ export function StopPickerStep({
   onNext,
   onBack,
 }: StopPickerStepProps) {
-  const [existingStops, setExistingStops] = useState<Stop[]>([]);
+  const [existingStops, setExistingStops] = useState<MappedStop[]>([]);
   const [map, setMap] = useState<L.Map | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -64,7 +63,7 @@ export function StopPickerStep({
   }, []);
 
   const handleStopSelect = useCallback(
-    (stop: Stop) => {
+    (stop: MappedStop) => {
       onStopsChange([
         ...stops,
         {

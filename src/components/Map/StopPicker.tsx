@@ -5,6 +5,13 @@ import { CircleMarker, Polyline, Tooltip } from "react-leaflet";
 import type L from "leaflet";
 import type { Stop } from "@/lib/database.types";
 
+export type MappedStop = Stop & {
+  id: string;
+  name: string | null;
+  lat: number;
+  lon: number;
+};
+
 export interface PickedStop {
   id?: string;
   lat: number;
@@ -14,15 +21,15 @@ export interface PickedStop {
 }
 
 interface StopSequenceConfig {
-  stop: Stop;
+  stop: MappedStop;
   distance: number;
 }
 
 interface StopPickerProps {
   map: L.Map | null;
-  existingStops: Stop[];
+  existingStops: MappedStop[];
   selectedStops: StopSequenceConfig[];
-  onSelect: (stop: Stop) => void;
+  onSelect: (stop: MappedStop) => void;
   onSelectCoordinate?: (lat: number, lon: number) => void;
   isPickingStart?: boolean;
 }
